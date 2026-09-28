@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<!-- saved from url=(0060)https://c9a4e40a27cc4f22b23fef3387f6826d.app.workbuddy.host/ -->
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>空气和水的压缩对比 · 微观模拟</title>
+<style>
+  :root{
+    --bg1:#eef4fa; --bg2:#f8fbfd; --card:#ffffff; --ink:#1f2b3a; --muted:#5b6b7c;
+    --line:#dde5ee; --blue:#2f7fd1; --blue-d:#1f63ad; --water:#3aa0e0;
+    --ok:#2e8b57; --bad:#c8564f; --soft:#f1f6fb;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; color:var(--ink); background:linear-gradient(180deg,var(--bg1),var(--bg2));
+    font-family:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+    font-size:17px; line-height:1.6;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 18px 46px}
+  h1{font-size:28px;margin:0 0 4px;letter-spacing:.5px}
+  .lead{color:var(--muted);font-size:16.5px;margin:0 0 14px}
+  .tasks{background:#fff;border:1px solid var(--line);border-left:5px solid var(--blue);
+    border-radius:12px;padding:10px 18px;margin-bottom:14px}
+  .tasks h3{margin:0 0 4px;font-size:17.5px}
+  .tasks ol{margin:0;padding-left:22px;color:#33465c;font-size:16px}
+  .toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  button{font-family:inherit;font-size:16px;padding:9px 17px;border-radius:10px;
+    border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:.15s}
+  button:hover{background:var(--soft)}
+  button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  button.primary:hover{background:var(--blue-d);border-color:var(--blue-d)}
+  .hint{color:var(--muted);font-size:14.5px}
+  .cards{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:12px 14px 14px;width:528px;box-shadow:0 6px 20px rgba(31,60,90,.07)}
+  .card.gasbox{border-top:5px solid #7fa8d4}
+  .card.waterbox{border-top:5px solid var(--water)}
+  .card h2{font-size:20px;margin:0}
+  .card .sub{color:var(--muted);font-size:14px;margin:1px 0 6px}
+  .cardbody{display:flex;gap:12px;align-items:flex-start}
+  .col{display:flex;flex-direction:column;align-items:center;flex:1}
+  canvas{display:block;cursor:pointer;border-radius:10px;background:#fbfdff;touch-action:manipulation}
+  canvas:hover{background:#f4f9ff}
+  .readout{font-size:15.5px;text-align:center;color:#33465c;min-height:58px;margin-top:4px;line-height:1.5}
+  .readout b{font-size:19px;color:var(--blue)}
+  .readout .tag{display:inline-block;font-size:13.5px;padding:1px 9px;border-radius:20px;
+    background:var(--soft);color:var(--muted);margin-left:4px}
+  .row{display:flex;gap:8px;justify-content:center;margin-top:6px}
+  .row button{font-size:15px;padding:7px 14px}
+  .cap{font-size:13.5px;color:var(--muted);margin-top:4px;text-align:center}
+  .note{font-size:14.5px;color:#3b4f66;background:var(--soft);border-radius:8px;
+    padding:6px 10px;margin-top:6px;text-align:left}
+  .legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:6px}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+  .conclusion,.quiz,.tasks{box-shadow:0 4px 14px rgba(31,60,90,.05)}
+  .conclusion{margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 20px}
+  .conclusion h3,.quiz h3{margin:0 0 10px;font-size:19px}
+  table{width:100%;border-collapse:collapse;font-size:16px}
+  th,td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+  th{background:var(--soft);font-weight:600;width:20%}
+  .key{margin-top:10px;background:#fff8e6;border:1px solid #f0dca8;border-radius:10px;padding:10px 14px;font-size:16.5px}
+  .quiz{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 20px}
+  .q{margin-bottom:14px}
+  .q p{margin:0 0 6px;font-size:16.5px;font-weight:600}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}
+  .opt{display:block;width:100%;text-align:left;margin:0;font-size:15.5px;padding:8px 14px}
+  .opt.ok{background:#e8f6ed;border-color:#8ccf9e;color:var(--ok)}
+  .opt.no{background:#fdeceb;border-color:#e79a95;color:var(--bad)}
+  .demo{margin:8px 0 2px;text-align:center}
+  .demo canvas{margin:0 auto}
+  .demo .bar{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:6px}
+  .explain{margin-top:8px;background:#f6f9fc;border:1px solid var(--line);border-left:4px solid var(--blue);
+    border-radius:8px;padding:9px 14px;font-size:15.5px;color:#33465c;text-align:left;line-height:1.65}
+  .explain b{color:var(--blue)}
+  .fb{font-size:15.5px;margin-top:5px;min-height:24px}
+  .fb.ok{color:var(--ok)} .fb.no{color:var(--bad)}
+  .foot{margin-top:12px;color:var(--muted);font-size:13.5px}
+  @media (max-width:1100px){ .card{width:100%} .cardbody{flex-wrap:wrap} .col{min-width:250px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>空气和水，谁更容易被压缩？</h1>
+  <p class="lead">点一下注射器，活塞会自己往下压，右边的微观世界同步动起来——看看两种物质里"分子之间的间隔"究竟发生了什么变化。</p>
+
+  <div class="tasks">
+    <h3>观察任务（先看，再回答）</h3>
+    <ol>
+      <li>分别推一推两个注射器的活塞，哪个活塞移动得更多？</li>
+      <li>压缩过程中，微观框里分子的<b>数目</b>变了吗？分子的<b>大小</b>变了吗？</li>
+      <li>真正发生变化的是什么？用一句话说给同桌听。</li>
+    </ol>
+  </div>
+
+  <div class="toolbar">
+    <button class="primary" id="btnBoth">同时压缩两个注射器</button>
+    <button id="btnReset">全部松手复位</button>
+    <button id="btnSlow">演示速度：常速</button>
+    <span class="hint">提示：直接点击注射器，也能单独演示（再点一次松手）</span>
+  </div>
+
+  <div class="cards">
+    <!-- 空气 -->
+    <section class="card gasbox">
+      <h2>注射器 A：空气</h2>
+      <div class="sub">20 mL 空气（主要含氮分子、氧分子等）</div>
+      <div class="cardbody">
+        <div class="col">
+          <canvas id="macroGas" width="472" height="744" style="width: 236px; height: 372px;"></canvas>
+          <div class="readout" id="readGas">筒内体积：<b>10.0 mL</b> <span class="tag">体积明显变小，松手会回弹</span><br>手感：较费力　·　分子平均间隔：21（示意）</div>
+          <div class="row">
+            <button class="primary" data-act="push" data-id="gas">推压活塞</button>
+            <button data-act="release" data-id="gas">松手</button>
+          </div>
+        </div>
+        <div class="col">
+          <canvas id="microGas" width="472" height="744" style="width: 236px; height: 372px;"></canvas>
+          <div class="cap">微观模拟：筒内空气的分子（放大示意）</div>
+          <div class="legend">
+            <span><i style="background:#5c8fc9"></i>氮分子</span>
+            <span><i style="background:#57ab8f"></i>氧分子</span>
+          </div>
+          <div class="legend">不同颜色表示空气里不同种类的分子</div>
+          <div class="note">分子本身的大小和数目始终不变，变的是<b>分子之间的间隔</b>。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 水 -->
+    <section class="card waterbox">
+      <h2>注射器 B：水</h2>
+      <div class="sub">20 mL 水（由水分子构成）</div>
+      <div class="cardbody">
+        <div class="col">
+          <canvas id="macroWater" width="472" height="744" style="width: 236px; height: 372px;"></canvas>
+          <div class="readout" id="readWater">筒内体积：<b>20.0 mL</b> <span class="tag">未加压</span><br>手感：推不动　·　分子平均间隔：19（示意）</div>
+          <div class="row">
+            <button class="primary" data-act="push" data-id="water">推压活塞</button>
+            <button data-act="release" data-id="water">松手</button>
+          </div>
+        </div>
+        <div class="col">
+          <canvas id="microWater" width="472" height="744" style="width: 236px; height: 372px;"></canvas>
+          <div class="cap">微观模拟：筒内水的水分子（放大示意）</div>
+          <div class="legend">
+            <span><i style="background:#e0574f"></i>氧原子</span>
+            <span><i style="background:#ffffff;border:1px solid #b9c4d0"></i>氢原子</span>
+          </div>
+          <div class="legend">一个水分子由一个氧原子和两个氢原子构成</div>
+          <div class="note">水分子已经挨得很近，很难再被挤紧——这就是水不易被压缩的原因。</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="quiz">
+    <h3>当堂小测</h3>
+    <div class="q" id="q1">
+      <p>1. 体温计放在腋下量体温时，玻璃管里的汞柱会慢慢上升。汞柱上升的真正原因是：</p>
+      <div class="opts">
+        <button class="opt" data-v="A">A. 受热后汞原子的体积变大了</button>
+        <button class="opt" data-v="B">B. 受热后汞原子之间的间隔变大了</button>
+        <button class="opt" data-v="C">C. 受热后汞原子的数目变多了</button>
+        <button class="opt" data-v="D">D. 受热后汞原子变成了别的原子</button>
+      </div>
+      <div class="demo">
+        <canvas id="thermo1" width="1040" height="600" style="width: 520px; height: 300px;"></canvas>
+        <div class="bar">
+          <button class="primary" data-play="d1">播放微观变化过程</button>
+          <span class="hint">（也可以直接点图片播放 / 再点一次复位）</span>
+        </div>
+      </div>
+      <div class="fb"></div>
+    </div>
+
+    <div class="q" id="q2">
+      <p>2. 瘪了一块的乒乓球放进热水里泡一泡，会重新鼓起来。主要原因是：</p>
+      <div class="opts">
+        <button class="opt" data-v="A">A. 热水钻进球里，把球撑起来了</button>
+        <button class="opt" data-v="B">B. 球内空气受热，其中多种分子之间的间隔变大了</button>
+        <button class="opt" data-v="C">C. 球内分子的数目变多了</button>
+        <button class="opt" data-v="D">D. 乒乓球的外壳受热变软，自己鼓了起来</button>
+      </div>
+      <div class="demo">
+        <canvas id="thermo2" width="1040" height="600" style="width: 520px; height: 300px;"></canvas>
+        <div class="bar">
+          <button class="primary" data-play="d2">播放微观变化过程</button>
+          <span class="hint">（也可以直接点图片播放 / 再点一次复位）</span>
+        </div>
+      </div>
+      <div class="fb"></div>
+    </div>
+
+    <p class="foot">说明：微观图为教学示意模型，粒子大小、间隔与运动快慢均经过夸张处理，用于体现"受热时间隔变大"这一变化趋势，不代表真实比例。</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var CV_W = 236, CV_H = 372;
+  // 宏观注射器几何
+  var TX0 = 62, TX1 = 174;              // 筒内左右
+  var TTOP = 110, TBOT = 310;           // 筒内上下
+  var TUBE_H = TBOT - TTOP;             // 200
+  // 微观框几何（与宏观筒内空间同步）
+  var MX0 = 18, MX1 = 218;
+  var MBOT = 310, M_TOP0 = 110, M_H0 = MBOT - M_TOP0;
+
+  function setup(cv, w, h){
+    var dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+    cv.style.width = w+"px"; cv.style.height = h+"px";
+    var ctx = cv.getContext("2d");
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return ctx;
+  }
+  function ease(t){ return 1 - Math.pow(1-t, 3); }
+  function rr(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  }
+
+  function Syringe(cfg){
+    this.type = cfg.type;
+    this.maxRatio = cfg.maxRatio;
+    this.mctx = setup(cfg.macro, CV_W, CV_H);
+    this.pctx = setup(cfg.micro, CV_W, CV_H);
+    this.readout = cfg.readout;
+    this.t = 0; this.target = 0; this.duration = 1.8;
+    this.avgGap = 0; this.gapInit = 0; this.gapReady = false;
+    this.time = 0; this.tipShown = true;
+    this.buildParticles();
+    var self = this;
+    function toggle(){
+      self.target = self.target > 0.5 ? 0 : 1;
+      self.tipShown = false;
+    }
+    cfg.macro.addEventListener("click", toggle);
+    cfg.micro.addEventListener("click", toggle);
+  }
+
+  Syringe.prototype.buildParticles = function(){
+    var i, j;
+    this.parts = [];
+    if(this.type === "gas"){
+      var n = 9;
+      for(i=0;i<n;i++){
+        this.parts.push({
+          x: MX0 + 14 + Math.random()*(MX1-MX0-28),
+          y: M_TOP0 + 14 + Math.random()*(M_H0-28),
+          vx: (Math.random()*2-1)*44,
+          vy: (Math.random()*2-1)*44,
+          r: 6.2,
+          c: (i % 3 === 0) ? "#57ab8f" : "#5c8fc9"
+        });
+      }
+    } else {
+      var cols = 10, rows = 11;
+      for(i=0;i<cols;i++){
+        for(j=0;j<rows;j++){
+          this.parts.push({
+            u: (i+0.5)/cols,
+            v: (j+0.5)/rows,
+            ang: -Math.PI/2 + (Math.random()*2-1)*1.0,
+            ph: Math.random()*6.28,
+            ph2: Math.random()*6.28
+          });
+        }
+      }
+    }
+  };
+
+  Syringe.prototype.microTop = function(){
+    return MBOT - M_H0 * (1 - this.maxRatio * ease(this.t));
+  };
+  Syringe.prototype.pistonY = function(){
+    return TTOP + TUBE_H * this.maxRatio * ease(this.t);
+  };
+
+  Syringe.prototype.update = function(dt){
+    this.time += dt;
+    if(this.target > this.t){ this.t = Math.min(this.target, this.t + dt/this.duration); }
+    else if(this.target < this.t){ this.t = Math.max(this.target, this.t - dt/(this.duration*0.55)); }
+
+    var i, j, p, top = this.microTop();
+    if(this.type === "gas"){
+      var oldTop = (this._lastTop === undefined) ? top : this._lastTop;
+      var ho = MBOT - oldTop, hn = MBOT - top;
+      if(hn > 1 && Math.abs(hn - ho) > 0.005){
+        var k = hn/ho;
+        for(i=0;i<this.parts.length;i++){
+          p = this.parts[i];
+          p.y = top + (p.y - oldTop)*k;
+        }
+      }
+      this._lastTop = top;
+
+      for(i=0;i<this.parts.length;i++){
+        p = this.parts[i];
+        p.x += p.vx*dt; p.y += p.vy*dt;
+        if(p.x < MX0+p.r){ p.x = MX0+p.r; p.vx = Math.abs(p.vx); }
+        if(p.x > MX1-p.r){ p.x = MX1-p.r; p.vx = -Math.abs(p.vx); }
+        if(p.y < top+p.r){ p.y = top+p.r; p.vy = Math.abs(p.vy); }
+        if(p.y > MBOT-p.r){ p.y = MBOT-p.r; p.vy = -Math.abs(p.vy); }
+      }
+      // 分子之间的碰撞
+      for(i=0;i<this.parts.length;i++){
+        for(j=i+1;j<this.parts.length;j++){
+          var a = this.parts[i], b = this.parts[j];
+          var dx = b.x-a.x, dy = b.y-a.y;
+          var d = Math.sqrt(dx*dx+dy*dy), m = a.r+b.r;
+          if(d < m && d > 0.001){
+            var nx = dx/d, ny = dy/d;
+            var va = a.vx*nx + a.vy*ny, vb = b.vx*nx + b.vy*ny;
+            if(va - vb > 0){
+              a.vx -= (va-vb)*nx; a.vy -= (va-vb)*ny;
+              b.vx += (va-vb)*nx; b.vy += (va-vb)*ny;
+            }
+            var ov = (m-d)/2;
+            a.x -= nx*ov; a.y -= ny*ov; b.x += nx*ov; b.y += ny*ov;
+          }
+        }
+      }
+      // 平均最近邻间隔
+      var sum = 0;
+      for(i=0;i<this.parts.length;i++){
+        var best = 1e9;
+        for(j=0;j<this.parts.length;j++){
+          if(i === j) continue;
+          var ddx = this.parts[i].x - this.parts[j].x;
+          var ddy = this.parts[i].y - this.parts[j].y;
+          var dd = Math.sqrt(ddx*ddx + ddy*ddy);
+          if(dd < best) best = dd;
+        }
+        sum += best;
+      }
+      var g = sum/this.parts.length;
+      this.avgGap = this.avgGap ? this.avgGap + (g - this.avgGap)*0.06 : g;
+    } else {
+      var hh = MBOT - top;
+      var g2 = ((MX1-MX0)/10 + hh/11) / 2;
+      this.avgGap = this.avgGap ? this.avgGap + (g2 - this.avgGap)*0.12 : g2;
+    }
+    if(!this.gapReady && this.avgGap > 0){ this.gapInit = this.avgGap; this.gapReady = true; }
+  };
+
+  /* ---------------- 宏观绘制 ---------------- */
+  Syringe.prototype.drawMacro = function(){
+    var ctx = this.mctx;
+    ctx.clearRect(0,0,CV_W,CV_H);
+    var shake = (this.type === "water" && this.t > 0.9 && this.target === 1) ? Math.sin(this.time*24)*1.5 : 0;
+    var py = this.pistonY() + shake;
+
+    // 筒底乳头
+    ctx.save();
+    ctx.fillStyle = "#e6eef6"; ctx.strokeStyle = "#b9c8d8"; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(TX0+34, TBOT+22); ctx.lineTo(TX0+46, TBOT+32);
+    ctx.lineTo(TX1-46, TBOT+32); ctx.lineTo(TX1-34, TBOT+22); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(TX0+48,TBOT+32); ctx.lineTo(TX0+48,TBOT+40);
+    ctx.lineTo(TX1-48,TBOT+40); ctx.lineTo(TX1-48,TBOT+32);
+    ctx.fillStyle = "#dce7f2"; ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    // 筒内空腔
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(TX0, TTOP-16, TX1-TX0, (TBOT+20)-(TTOP-16));
+
+    // 内容物
+    ctx.save();
+    ctx.beginPath(); ctx.rect(TX0, py, TX1-TX0, TBOT-py); ctx.clip();
+    var gr;
+    if(this.type === "gas"){
+      gr = ctx.createLinearGradient(TX0,0,TX1,0);
+      gr.addColorStop(0,"#e6f0fa"); gr.addColorStop(1,"#d3e4f5");
+    } else {
+      gr = ctx.createLinearGradient(TX0,0,TX1,0);
+      gr.addColorStop(0,"#9fd4f2"); gr.addColorStop(0.5,"#7cc4ec"); gr.addColorStop(1,"#a9dbf4");
+    }
+    ctx.fillStyle = gr;
+    ctx.fillRect(TX0, py, TX1-TX0, TBOT-py);
+    if(this.type === "water"){
+      ctx.fillStyle = "rgba(255,255,255,.35)";
+      ctx.fillRect(TX0+7, py+6, 7, Math.max(0, TBOT-py-18));
+    }
+    ctx.restore();
+
+    // 刻度
+    ctx.save();
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    for(var v=0; v<=20; v++){
+      var yy = TBOT - (v/20)*TUBE_H;
+      var major = (v % 5 === 0);
+      ctx.strokeStyle = "#9fb3c8"; ctx.lineWidth = major ? 2 : 1;
+      ctx.beginPath(); ctx.moveTo(TX1+3, yy); ctx.lineTo(TX1 + (major ? 13 : 7), yy); ctx.stroke();
+      if(major){
+        var active = (yy >= py - 1);
+        ctx.fillStyle = active ? "#2f7fd1" : "#8497aa";
+        ctx.font = (active ? "bold " : "") + "10px system-ui";
+        ctx.fillText(String(v), TX1+16, yy);
+      }
+    }
+    ctx.restore();
+
+    // 活塞头
+    ctx.save();
+    ctx.fillStyle = "#4a5b6e"; ctx.strokeStyle = "#33424f"; ctx.lineWidth = 2;
+    rr(ctx, TX0+1, py-13, TX1-TX0-2, 15, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#7a8b9e";
+    rr(ctx, TX0+1, py-10, TX1-TX0-2, 4, 2); ctx.fill();
+    ctx.restore();
+
+    // 活塞杆 + 推柄
+    ctx.save();
+    var cx = (TX0+TX1)/2, rodW = 12;
+    var ty = Math.max(10, py - 13 - 76);
+    ctx.fillStyle = "#eff4f9"; ctx.strokeStyle = "#b9c8d8"; ctx.lineWidth = 2;
+    rr(ctx, cx-rodW/2, ty, rodW, (py-13)-ty, 3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#4a5b6e"; ctx.strokeStyle = "#33424f";
+    rr(ctx, cx-24, ty-11, 48, 11, 4); ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    // 推力箭头
+    if(this.t > 0.02 && this.target === 1){
+      ctx.save();
+      var ax = cx, ay = Math.max(30, ty - 15);
+      ctx.strokeStyle = "#e08a3c"; ctx.fillStyle = "#e08a3c"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(ax, ay-15); ctx.lineTo(ax, ay+3); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ax-6, ay+1); ctx.lineTo(ax+6, ay+1); ctx.lineTo(ax, ay+13); ctx.closePath(); ctx.fill();
+      ctx.font = "bold 12px system-ui"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText("推力", ax+12, ay+1);
+      ctx.restore();
+    }
+
+    // 筒身外框 + 顶部凸缘
+    ctx.save();
+    ctx.strokeStyle = "#8fa6bd"; ctx.lineWidth = 3;
+    rr(ctx, TX0-8, TTOP-20, (TX1-TX0)+16, (TBOT+20)-(TTOP-20), 10); ctx.stroke();
+    ctx.fillStyle = "#e6eef6";
+    rr(ctx, TX0-16, TTOP-28, (TX1-TX0)+32, 13, 5); ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    // 点击提示气泡
+    if(this.tipShown){
+      ctx.save();
+      ctx.fillStyle = "rgba(47,127,209,.95)";
+      rr(ctx, cx-42, ty+16, 84, 22, 11); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 13px system-ui";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("点我试试", cx, ty+27);
+      ctx.restore();
+    }
+  };
+
+  /* ---------------- 微观绘制 ---------------- */
+  Syringe.prototype.drawMicro = function(){
+    var ctx = this.pctx;
+    ctx.clearRect(0,0,CV_W,CV_H);
+    var top = this.microTop(), h = MBOT - top, i, p;
+
+    // 框：筒内空间的放大
+    ctx.save();
+    ctx.fillStyle = (this.type === "gas") ? "#eef5fc" : "#e8f4fb";
+    rr(ctx, MX0, top, MX1-MX0, h, 6); ctx.fill();
+    ctx.setLineDash([6,4]); ctx.strokeStyle = "#9db4cb"; ctx.lineWidth = 2;
+    rr(ctx, MX0, top, MX1-MX0, h, 6); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    // 微观框里的活塞（与宏观同步下降）
+    ctx.fillStyle = "#4a5b6e";
+    rr(ctx, MX0-4, top-11, MX1-MX0+8, 11, 3); ctx.fill();
+
+    // 粒子
+    if(this.type === "gas"){
+      for(i=0;i<this.parts.length;i++){
+        p = this.parts[i];
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832);
+        ctx.fillStyle = p.c; ctx.fill();
+        ctx.lineWidth = 1.4; ctx.strokeStyle = "rgba(40,70,100,.35)"; ctx.stroke();
+        ctx.beginPath(); ctx.arc(p.x - p.r*0.3, p.y - p.r*0.35, p.r*0.28, 0, 6.2832);
+        ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fill();
+      }
+    } else {
+      var W = MX1 - MX0, r = 5.4, hr = 2.7, d = r*0.92;
+      var amp = 1.7 * (h/M_H0);
+      for(i=0;i<this.parts.length;i++){
+        p = this.parts[i];
+        var x = MX0 + p.u*W + Math.sin(this.time*3.1 + p.ph)*1.7;
+        var y = top + p.v*h + Math.cos(this.time*2.7 + p.ph2)*amp;
+        for(var s=-1; s<=1; s+=2){
+          var a = p.ang + s*0.95;
+          ctx.beginPath();
+          ctx.arc(x + Math.cos(a)*d, y + Math.sin(a)*d, hr, 0, 6.2832);
+          ctx.fillStyle = "#ffffff"; ctx.fill();
+          ctx.lineWidth = 1; ctx.strokeStyle = "#b9c4d0"; ctx.stroke();
+        }
+        ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832);
+        ctx.fillStyle = "#e0574f"; ctx.fill();
+        ctx.lineWidth = 1; ctx.strokeStyle = "#b9423b"; ctx.stroke();
+      }
+    }
+
+    // 间隔尺
+    ctx.save();
+    var gap = this.avgGap;
+    var gx = MX0 + 10, gy = top + 24;
+    ctx.strokeStyle = "#3f5b78"; ctx.fillStyle = "#3f5b78"; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx+gap, gy); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(gx, gy-4); ctx.lineTo(gx, gy+4);
+    ctx.moveTo(gx+gap, gy-4); ctx.lineTo(gx+gap, gy+4);
+    ctx.stroke();
+    ctx.font = "12px system-ui"; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+    ctx.fillText("分子间平均间隔 ≈ " + Math.round(gap) + "（示意）", gx, gy-6);
+    if(this.gapReady && this.t > 0.03){
+      var pct = Math.round((1 - gap/this.gapInit)*100);
+      ctx.textBaseline = "top";
+      ctx.fillStyle = (pct >= 8) ? "#c8564f" : "#7b8ea3";
+      ctx.fillText(pct >= 8 ? ("比压缩前缩小约 " + pct + "%") : "几乎没变小", gx, gy+8);
+    }
+    ctx.restore();
+
+    // 底部动态说明
+    ctx.save();
+    ctx.font = "13px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "#5b6b7c";
+    var txt;
+    if(this.type === "gas"){
+      txt = (this.t > 0.5) ? "被挤得更近了：间隔变小，运动不停" : "分子在不断运动，彼此离得较远";
+    } else {
+      txt = (this.t > 0.5) ? "再用力也挤不动，间隔几乎不变" : "水分子挨得很近，只在原地振动";
+    }
+    ctx.fillText(txt, (MX0+MX1)/2, MBOT + 26);
+    ctx.restore();
+  };
+
+  Syringe.prototype.render = function(){
+    this.drawMacro();
+    this.drawMicro();
+    var vol = 20 * (1 - this.maxRatio * ease(this.t));
+    var stateTxt, feel;
+    if(this.type === "gas"){
+      if(this.t < 0.03){ stateTxt = "未加压"; feel = "省力"; }
+      else if(this.t < 0.97){ stateTxt = "正在被压缩，活塞明显下移"; feel = "稍费力"; }
+      else { stateTxt = "体积明显变小，松手会回弹"; feel = "较费力"; }
+    } else {
+      if(this.t < 0.03){ stateTxt = "未加压"; feel = "推不动"; }
+      else if(this.t < 0.97){ stateTxt = "用力推压，活塞只动一点点"; feel = "很费力"; }
+      else { stateTxt = "体积几乎不变，推不下去"; feel = "非常费力"; }
+    }
+    this.readout.innerHTML =
+      "筒内体积：<b>" + vol.toFixed(1) + " mL</b> <span class='tag'>" + stateTxt + "</span><br>" +
+      "手感：" + feel + "　·　分子平均间隔：" + Math.round(this.avgGap) + "（示意）";
+  };
+
+  /* ---------------- 实例与控件 ---------------- */
+  var gas = new Syringe({
+    type:"gas", maxRatio:0.5,
+    macro:document.getElementById("macroGas"),
+    micro:document.getElementById("microGas"),
+    readout:document.getElementById("readGas")
+  });
+  var water = new Syringe({
+    type:"water", maxRatio:0.025,
+    macro:document.getElementById("macroWater"),
+    micro:document.getElementById("microWater"),
+    readout:document.getElementById("readWater")
+  });
+  var list = [gas, water];
+
+  document.getElementById("btnBoth").addEventListener("click", function(){
+    list.forEach(function(s){ s.target = 1; s.tipShown = false; });
+  });
+  document.getElementById("btnReset").addEventListener("click", function(){
+    list.forEach(function(s){ s.target = 0; });
+  });
+  var slow = false, btnSlow = document.getElementById("btnSlow");
+  btnSlow.addEventListener("click", function(){
+    slow = !slow;
+    list.forEach(function(s){ s.duration = slow ? 3.4 : 1.8; });
+    btnSlow.textContent = "演示速度：" + (slow ? "慢速" : "常速");
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-act]"), function(btn){
+    btn.addEventListener("click", function(){
+      var s = (btn.getAttribute("data-id") === "gas") ? gas : water;
+      s.target = (btn.getAttribute("data-act") === "push") ? 1 : 0;
+      s.tipShown = false;
+    });
+  });
+
+  /* ---------------- 场景演示：实物 + 微观粒子 ---------------- */
+  var SC_W = 520, SC_H = 300;
+
+  function Scene(cv){
+    this.ctx = setup(cv, SC_W, SC_H);
+    this.heat = 0; this.target = 0; this.time = 0;
+    var self = this;
+    cv.addEventListener("click", function(){ self.toggle(); });
+  }
+  Scene.prototype.toggle = function(){ this.target = this.target > 0.5 ? 0 : 1; };
+  Scene.prototype.step = function(dt){
+    this.time += dt;
+    if(this.target > this.heat) this.heat = Math.min(1, this.heat + dt/2.4);
+    else if(this.target < this.heat) this.heat = Math.max(0, this.heat - dt/1.2);
+  };
+
+  /* ========== 场景一：体温计（玻璃体温计实物 + 管内汞原子） ========== */
+  function Thermometer(cv){
+    Scene.call(this, cv);
+    var cols = 12, rows = 8, i, j;
+    this.cols = cols; this.rows = rows;
+    this.atoms = [];
+    for(i=0;i<cols;i++){
+      for(j=0;j<rows;j++){
+        this.atoms.push({u:(i+0.5)/cols, v:(j+0.5)/rows, ph:Math.random()*6.28, ph2:Math.random()*6.28});
+      }
+    }
+  }
+  Thermometer.prototype = Object.create(Scene.prototype);
+  Thermometer.prototype.constructor = Thermometer;
+  Thermometer.prototype.update = function(dt){ this.step(dt); };
+  Thermometer.prototype.draw = function(){
+    var ctx = this.ctx, i, a;
+    ctx.clearRect(0,0,SC_W,SC_H);
+    var heat = this.heat;
+    var colH = 30 + 105*heat;               // 汞柱长度
+    var temp = 36.5 + 3.5*heat;             // 读数
+    var cx = 72, x0 = 60, x1 = 84, top = 44, bot = 222;
+
+    // 玻璃管身
+    ctx.save();
+    ctx.fillStyle = "#eaf2f7"; ctx.strokeStyle = "#9db4cb"; ctx.lineWidth = 2;
+    rr(ctx, x0, top, x1-x0, bot-top, 9); ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    // 刻度
+    ctx.save();
+    ctx.strokeStyle = "#8497aa"; ctx.fillStyle = "#8497aa";
+    ctx.font = "10px system-ui"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    for(var t=36; t<=41; t++){
+      var ty = bot - (30 + (t-36.5)*30);
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(x1+2, ty); ctx.lineTo(x1+11, ty); ctx.stroke();
+      ctx.fillText(String(t), x1+14, ty);
+    }
+    ctx.restore();
+
+    // 汞柱
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x0+2, top+2, x1-x0-4, bot-top-4); ctx.clip();
+    ctx.fillStyle = "#9aa7b4";
+    ctx.fillRect(66, bot-colH, 12, colH);
+    ctx.fillStyle = "rgba(255,255,255,.35)";
+    ctx.fillRect(67.5, bot-colH+2, 3, Math.max(0, colH-6));
+    ctx.restore();
+
+    // 汞泡（感温泡）
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, 238, 16, 0, 6.2832);
+    var gg = ctx.createRadialGradient(cx-5, 232, 2, cx, 238, 16);
+    gg.addColorStop(0,"#ced7e0"); gg.addColorStop(1,"#8e9caa");
+    ctx.fillStyle = gg; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = "#7d8b99"; ctx.stroke();
+    ctx.restore();
+
+    // 玻璃外框复描
+    ctx.save();
+    ctx.strokeStyle = "#8fa6bd"; ctx.lineWidth = 2;
+    rr(ctx, x0, top, x1-x0, bot-top, 9); ctx.stroke();
+    ctx.restore();
+
+    // 读数 + 指示三角
+    ctx.save();
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = "bold 15px system-ui"; ctx.fillStyle = "#c8564f";
+    ctx.fillText("读数 " + temp.toFixed(1) + " ℃", cx, 27);
+    var yn = bot - colH;
+    ctx.fillStyle = "#c8564f";
+    ctx.beginPath();
+    ctx.moveTo(x1+11, yn); ctx.lineTo(x1+3, yn-5); ctx.lineTo(x1+3, yn+5); ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    // 热源：人体热量
+    ctx.save();
+    ctx.strokeStyle = "#e08a3c"; ctx.fillStyle = "#e08a3c"; ctx.lineWidth = 2;
+    for(i=0;i<3;i++){
+      var hx = cx - 16 + i*16, hy = 272;
+      ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy-12); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(hx-4, hy-10); ctx.lineTo(hx+4, hy-10); ctx.lineTo(hx, hy-16); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = "#a86a2a"; ctx.font = "12.5px system-ui";
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.fillText("接触人体（约 37 ℃）", cx + 66, 264);
+    ctx.restore();
+
+    // 放大引线
+    var MX0 = 172, MX1 = 362, MY0 = 50, MY1 = 250;
+    ctx.save();
+    ctx.setLineDash([4,3]); ctx.strokeStyle = "#b9c4d0"; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(78, bot - colH); ctx.lineTo(MX0, MY0);
+    ctx.moveTo(78, bot); ctx.lineTo(MX0, MY1);
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.restore();
+
+    // 放大框：细管内部
+    var IX0 = MX0 + 9, IX1 = MX1 - 9, yB = MY1 - 8;
+    var W = IX1 - IX0;
+    var fillH = 116 + 49*heat;              // 汞占据的长度（受热变长）
+    ctx.save();
+    ctx.fillStyle = "#eef1f5"; ctx.fillRect(MX0, MY0, MX1-MX0, MY1-MY0);
+    ctx.fillStyle = "#dbe5ee";
+    ctx.fillRect(MX0, MY0, 9, MY1-MY0);
+    ctx.fillRect(MX1-9, MY0, 9, MY1-MY0);
+    ctx.strokeStyle = "#9db4cb"; ctx.lineWidth = 2;
+    ctx.strokeRect(MX0, MY0, MX1-MX0, MY1-MY0);
+    ctx.restore();
+
+    // 汞原子
+    var amp = 1.2 + 2.0*heat;
+    ctx.save();
+    for(i=0;i<this.atoms.length;i++){
+      a = this.atoms[i];
+      var px = IX0 + a.u*W + Math.sin(this.time*3.0 + a.ph)*amp;
+      var py = yB - a.v*fillH + Math.cos(this.time*2.6 + a.ph2)*amp;
+      ctx.beginPath(); ctx.arc(px, py, 4, 0, 6.2832);
+      ctx.fillStyle = "#a8b5c2"; ctx.fill();
+      ctx.lineWidth = 1; ctx.strokeStyle = "#7d8b99"; ctx.stroke();
+      ctx.beginPath(); ctx.arc(px-1.2, py-1.4, 1.2, 0, 6.2832);
+      ctx.fillStyle = "rgba(255,255,255,.75)"; ctx.fill();
+    }
+    ctx.restore();
+
+    // 文字标注
+    ctx.save();
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = "13.5px system-ui"; ctx.fillStyle = "#33465c";
+    ctx.fillText("细管内部放大（汞原子）", (MX0+MX1)/2, MY0 - 16);
+    ctx.font = "12px system-ui"; ctx.fillStyle = "#8497aa";
+    ctx.fillText("上方为真空", (IX0+IX1)/2, yB - fillH - 13);
+    var gap = (W/this.cols + fillH/this.rows)/2;
+    ctx.font = "13.5px system-ui";
+    ctx.fillStyle = (heat > 0.05) ? "#c8564f" : "#5b6b7c";
+    ctx.fillText("汞原子间平均间隔 ≈ " + gap.toFixed(1) + (heat > 0.05 ? "（变大 ↑）" : ""),
+                 (IX0+IX1)/2, MY1 + 17);
+    ctx.font = "12.5px system-ui"; ctx.fillStyle = "#5b6b7c";
+    ctx.fillText("汞由汞原子直接构成：原子数目不变、原子大小不变", (MX0+MX1)/2, MY1 + 37);
+    ctx.restore();
+  };
+
+  /* ========== 场景二：瘪乒乓球放入热水（烧杯实物 + 球内分子） ========== */
+  function BallCup(cv){
+    Scene.call(this, cv);
+    var i;
+    this.mols = [];
+    for(i=0;i<8;i++){
+      this.mols.push({
+        ang: Math.random()*6.28,
+        rho: 0.30 + Math.random()*0.55,
+        da: (Math.random()*2-1)*0.55,
+        dr: (Math.random()*2-1)*0.16,
+        c: (i % 3 === 0) ? "#57ab8f" : "#5c8fc9"
+      });
+    }
+  }
+  BallCup.prototype = Object.create(Scene.prototype);
+  BallCup.prototype.constructor = BallCup;
+  BallCup.prototype.update = function(dt){
+    this.step(dt);
+    var sp = 1 + 1.3*this.heat, i, m;
+    for(i=0;i<this.mols.length;i++){
+      m = this.mols[i];
+      m.ang += m.da*dt*sp;
+      m.rho += m.dr*dt*sp;
+      if(m.rho < 0.22){ m.rho = 0.22; m.dr = Math.abs(m.dr); }
+      if(m.rho > 0.88){ m.rho = 0.88; m.dr = -Math.abs(m.dr); }
+    }
+  };
+  BallCup.prototype.ballPath = function(cx, cy, R, dent){
+    var ctx = this.ctx, N = 84, i, a, c, k, dep, r, x, y;
+    ctx.beginPath();
+    for(i=0;i<=N;i++){
+      a = i/N*Math.PI*2 - Math.PI/2;                 // 顶部为 -PI/2
+      c = Math.cos(a + Math.PI/2);                   // 顶部=1，底部=-1
+      k = Math.max(0, c - 0.25)/0.75;
+      dep = dent * 0.45 * k * k;
+      r = R * (1 - dep);
+      x = cx + r*Math.cos(a); y = cy + r*Math.sin(a);
+      if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  };
+  BallCup.prototype.draw = function(){
+    var ctx = this.ctx, i, m;
+    ctx.clearRect(0,0,SC_W,SC_H);
+    var heat = this.heat, dent = 1 - heat;
+    var cx = 220, cy = 186, R = 48 + 12*heat;
+    var cupTop = 104, cupBot = 272, waterY = 132;
+
+    // 热水上方的热气
+    ctx.save();
+    ctx.strokeStyle = "#e08a3c"; ctx.lineWidth = 2;
+    for(i=0;i<3;i++){
+      var wy = 62 + i*13;
+      ctx.beginPath();
+      for(var wx=176; wx<=264; wx+=4){
+        var yy = wy + Math.sin((wx + this.time*26 + i*20)/14)*3.2;
+        if(wx === 176) ctx.moveTo(wx, yy); else ctx.lineTo(wx, yy);
+      }
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#c8722a"; ctx.font = "bold 13.5px system-ui";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("热水（约 80 ℃）", 220, 46);
+    ctx.restore();
+
+    // 杯内水
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(112, cupTop); ctx.lineTo(122, cupBot);
+    ctx.lineTo(318, cupBot); ctx.lineTo(328, cupTop); ctx.closePath();
+    ctx.clip();
+    ctx.fillStyle = "#d7ecfa";
+    ctx.fillRect(110, waterY, 220, cupBot - waterY);
+    // 上升的小气泡
+    ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1;
+    for(i=0;i<4;i++){
+      var bx = 152 + i*46;
+      var by = cupBot - 6 - ((this.time*26 + i*33) % (cupBot - waterY - 10));
+      ctx.beginPath(); ctx.arc(bx, by, 2.6, 0, 6.2832); ctx.fill(); ctx.stroke();
+    }
+    ctx.restore();
+
+    // 乒乓球（外壳）
+    ctx.save();
+    this.ballPath(cx, cy, R, dent);
+    ctx.fillStyle = "#fdfdfd"; ctx.fill();
+    ctx.lineWidth = 2.2; ctx.strokeStyle = "#aebccb"; ctx.stroke();
+    ctx.clip();
+    // 接缝
+    ctx.beginPath();
+    ctx.arc(cx, cy, R*0.98, -0.5, 0.9);
+    ctx.lineWidth = 1.4; ctx.strokeStyle = "#dbe4ec"; ctx.stroke();
+    ctx.restore();
+
+    // 球内分子
+    var rx = R*0.84, ry = rx*(1 - 0.4*dent);
+    ctx.save();
+    this.ballPath(cx, cy, R, dent); ctx.clip();
+    for(i=0;i<this.mols.length;i++){
+      m = this.mols[i];
+      var px = cx + m.rho*rx*Math.cos(m.ang);
+      var py = cy + m.rho*ry*Math.sin(m.ang);
+      ctx.beginPath(); ctx.arc(px, py, 4.5, 0, 6.2832);
+      ctx.fillStyle = m.c; ctx.fill();
+      ctx.lineWidth = 1.2; ctx.strokeStyle = "rgba(40,70,100,.35)"; ctx.stroke();
+      ctx.beginPath(); ctx.arc(px-1.4, py-1.6, 1.4, 0, 6.2832);
+      ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fill();
+    }
+    ctx.restore();
+
+    // 热量传递箭头（热水 → 球）
+    ctx.save();
+    ctx.strokeStyle = "#e08a3c"; ctx.fillStyle = "#e08a3c"; ctx.lineWidth = 2;
+    for(i=0;i<2;i++){
+      var ax = cx - 30 + i*60, ay = 258;
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax, ay-14); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(ax-4, ay-12); ctx.lineTo(ax+4, ay-12); ctx.lineTo(ax, ay-19); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+
+    // 烧杯玻璃壁
+    ctx.save();
+    ctx.strokeStyle = "#8fa6bd"; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(112, cupTop); ctx.lineTo(122, cupBot); ctx.moveTo(328, cupTop); ctx.lineTo(318, cupBot);
+    ctx.moveTo(122, cupBot); ctx.lineTo(318, cupBot);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(106, cupTop); ctx.lineTo(334, cupTop);
+    ctx.stroke();
+    ctx.restore();
+
+    // 右侧说明
+    ctx.save();
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = "bold 14px system-ui"; ctx.fillStyle = "#33465c";
+    ctx.fillText("球内气体放大", 428, 88);
+    ctx.font = "12.5px system-ui"; ctx.fillStyle = "#5b6b7c";
+    ctx.fillText("球内有氮分子、氧分子等多种分子", 428, 110);
+    ctx.fillText("（空气是混合物，没有“空气分子”）", 428, 130);
+    var g1 = 0.5*Math.sqrt(Math.PI*rx*ry/this.mols.length);
+    ctx.font = "bold 15px system-ui";
+    ctx.fillStyle = (heat > 0.05) ? "#c8564f" : "#2f7fd1";
+    ctx.fillText("分子间平均间隔 ≈ " + g1.toFixed(1) + (heat > 0.05 ? "（变大 ↑）" : ""), 428, 164);
+    ctx.font = "13px system-ui"; ctx.fillStyle = "#33465c";
+    ctx.fillText("受热 → 运动加快", 428, 196);
+    ctx.fillText("间隔变大 → 体积膨胀", 428, 216);
+    ctx.fillText("把瘪下去的球壁顶回去", 428, 236);
+    ctx.font = "12.5px system-ui"; ctx.fillStyle = "#5b6b7c";
+    ctx.fillText("分子数目不变、分子大小不变", 428, 262);
+    ctx.restore();
+  };
+
+  var d1 = new Thermometer(document.getElementById("thermo1"));
+  var d2 = new BallCup(document.getElementById("thermo2"));
+  var demos = [d1, d2];
+  Array.prototype.forEach.call(document.querySelectorAll("[data-play]"), function(btn){
+    btn.addEventListener("click", function(){
+      var d = (btn.getAttribute("data-play") === "d1") ? d1 : d2;
+      d.toggle();
+    });
+  });
+
+  /* ---------------- 当堂小测 ---------------- */
+  var answers = {
+    q1:{
+      ok:"B", demo:d1,
+      say:"B 正确。汞柱上升，不是汞原子变大了，而是汞原子之间的间隔变大了。",
+      step:"微观过程：体温计接触人体 → 汞原子得到能量、运动加剧 → 汞原子之间的间隔变大 → 汞的总体积变大 → 细管里的液柱上升，显示出体温。整个过程中，汞原子的大小和数目都没有改变（汞由汞原子直接构成，不存在「汞分子」）；温度降低时间隔变小、体积收缩，体温计的缩口正是为了防止液柱自己退回，所以用前要甩一甩。"
+    },
+    q2:{
+      ok:"B", demo:d2,
+      say:"B 正确。乒乓球重新鼓起来，不是水钻进去了，也不是分子变多了——是球内多种分子之间的间隔变大了。",
+      step:"微观过程：瘪乒乓球放进热水 → 球内气体被加热 → 氮分子、氧分子等多种分子的运动加快 → 分子之间的间隔变大 → 气体体积膨胀 → 把瘪下去的球壁顶了回去，球又鼓了起来。特别提醒：空气是混合物，球内并没有一种叫「空气分子」的粒子，而是氮分子、氧分子等多种分子；这些分子的数目没有增多，分子本身的大小也没有改变。",
+    }
+  };
+  Object.keys(answers).forEach(function(qid){
+    var box = document.getElementById(qid);
+    var fb = box.querySelector(".fb");
+    var old = box.querySelector(".explain");
+    Array.prototype.forEach.call(box.querySelectorAll(".opt"), function(b){
+      b.addEventListener("click", function(){
+        Array.prototype.forEach.call(box.querySelectorAll(".opt"), function(x){
+          x.classList.remove("ok","no");
+        });
+        if(old){ old.remove(); old = null; }
+        var v = b.getAttribute("data-v"), a = answers[qid];
+        if(v === a.ok){
+          b.classList.add("ok"); fb.className = "fb ok";
+          fb.textContent = "答对了！" + a.say;
+          var div = document.createElement("div");
+          div.className = "explain";
+          div.innerHTML = "<b>微观间隔的变化过程：</b>" + a.step;
+          box.appendChild(div); old = div;
+          a.demo.target = 1;                 // 自动播放对应的微观动画
+        } else {
+          b.classList.add("no"); fb.className = "fb no";
+          fb.textContent = "这样组合不对，再想一想吧。提示：受热前后，粒子本身的大小和数目会变吗？变的是粒子'之间'的什么？";
+        }
+      });
+    });
+  });
+
+  /* ---------------- 主循环 ---------------- */
+  var last = performance.now();
+  function frame(now){
+    var dt = Math.min(0.05, (now - last)/1000);
+    last = now;
+    for(var i=0;i<list.length;i++){ list[i].update(dt); list[i].render(); }
+    for(var k=0;k<demos.length;k++){ demos[k].update(dt); demos[k].draw(); }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+
+</body></html>
